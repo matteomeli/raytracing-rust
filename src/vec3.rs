@@ -3,6 +3,8 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
 
+use rand::prelude::*;
+
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Vec3 {
     pub x: f32,
@@ -23,6 +25,15 @@ impl Vec3 {
         let length = v.length();
         debug_assert!(length != 0.0, "Division by 0.");
         v / length
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        let mut rng = thread_rng();
+        let mut candidate = Vec3::from(rng.gen::<f32>());
+        while candidate.squared_length() >= 1.0 {
+            candidate = Vec3::from(rng.gen::<f32>());
+        }
+        candidate
     }
 
     // As color

@@ -21,9 +21,11 @@ where
     }
 
     pub fn color(&self, ray: &Ray) -> Vec3 {
-        let mut hit_result = HitResult::default();
-        if self.hit(ray, 0.0, f32::MAX, &mut hit_result) {
-            Vec3::from(0.5) + hit_result.normal * 0.5
+        let mut hit = HitResult::default();
+        if self.hit(ray, 0.0, f32::MAX, &mut hit) {
+            let target = hit.point + hit.normal + Vec3::random_in_unit_sphere();
+            let bounced = Ray::new(hit.point, target - hit.point);
+            0.5 * self.color(&bounced)
         } else {
             let unit_direction = Vec3::unit_from(ray.direction);
             let t = 0.5 * (unit_direction.y) + 1.0;
