@@ -22,7 +22,8 @@ where
 
     pub fn color(&self, ray: &Ray) -> Vec3 {
         let mut hit = HitResult::default();
-        if self.hit(ray, 0.0, f32::MAX, &mut hit) {
+        // Ignore hits very close to 0.
+        if self.hit(ray, 0.001, f32::MAX, &mut hit) {
             let target = hit.point + hit.normal + Vec3::random_in_unit_sphere();
             let bounced = Ray::new(hit.point, target - hit.point);
             0.5 * self.color(&bounced)

@@ -10,8 +10,8 @@ fn main() -> Result<(), std::io::Error> {
     let path = Path::new("out/scene.ppm");
     let mut file = File::create(&path)?;
 
-    let nx = 200;
-    let ny = 100;
+    let nx = 1024;
+    let ny = 512;
     let ns = 100;
 
     // Write PPM header
@@ -35,6 +35,9 @@ fn main() -> Result<(), std::io::Error> {
                 col += world.color(&ray);
             }
             col /= ns as f32;
+
+            // Gamma correction (gamma 2)
+            col = Vec3::new(col[0].sqrt(), col[1].sqrt(), col[2].sqrt());
 
             let ir = (255.9 * col[0]) as i32;
             let ig = (255.9 * col[1]) as i32;
