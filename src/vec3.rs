@@ -19,8 +19,13 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
-    pub fn into_unit(v: Vec3) -> Self {
+    pub fn from(value: f32) -> Self {
+        Vec3::new(value, value, value)
+    }
+
+    pub fn unit_from(v: Vec3) -> Self {
         let length = v.length();
+        debug_assert!(length != 0.0, "Division by 0.");
         v / length
     }
 
