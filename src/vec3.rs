@@ -1,5 +1,7 @@
 use std::fmt;
-use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Vec3 {
@@ -51,15 +53,11 @@ impl Vec3 {
     }
 
     pub fn dot(&self) -> f32 {
-        self.x * self.x + self.y * self.y + self.z * self.z
+        dot(self, self)
     }
 
-    pub fn cross(&self, rhs: &Self) -> Self {
-        Vec3::new(
-            self.y * rhs.z - self.z * rhs.y,
-            self.z * rhs.x - self.x * rhs.z,
-            self.x * rhs.y - self.y * rhs.x,
-        )
+    pub fn cross(&self, other: &Self) -> Self {
+        cross(self, other)
     }
 }
 
@@ -187,4 +185,30 @@ impl fmt::Display for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.x, self.y, self.z)
     }
+}
+
+impl Sub for Vec3 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Vec3::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
+    }
+}
+
+impl SubAssign for Vec3 {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = Vec3::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z);
+    }
+}
+
+pub fn dot(v1: &Vec3, v2: &Vec3) -> f32 {
+    v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+}
+
+pub fn cross(v1: &Vec3, v2: &Vec3) -> Vec3 {
+    Vec3::new(
+        v1.y * v2.z - v1.z * v2.y,
+        v1.z * v2.x - v1.x * v2.z,
+        v1.x * v2.y - v1.y * v2.x,
+    )
 }
