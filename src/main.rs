@@ -1,20 +1,8 @@
-use raytracer::{HitResult, Hittable, Ray, Sphere, Vec3, World};
+use raytracer::{Ray, Sphere, Vec3, World};
 
-use std::f32;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-
-fn color<T: Hittable>(ray: &Ray, hittable: &T) -> Vec3 {
-    let mut hit_result = HitResult::default();
-    if hittable.hit(ray, 0.0, f32::MAX, &mut hit_result) {
-        Vec3::from(0.5) + hit_result.normal * 0.5
-    } else {
-        let unit_direction = Vec3::unit_from(ray.direction);
-        let t = 0.5 * (unit_direction.y) + 1.0;
-        (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
-    }
-}
 
 fn main() -> Result<(), std::io::Error> {
     let path = Path::new("out/scene.ppm");
@@ -41,7 +29,7 @@ fn main() -> Result<(), std::io::Error> {
             let v = y as f32 / ny as f32;
 
             let ray = Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
-            let col = color(&ray, &world);
+            let col = world.color(&ray);
 
             let ir = (255.9 * col[0]) as i32;
             let ig = (255.9 * col[1]) as i32;
