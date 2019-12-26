@@ -7,10 +7,6 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub fn zero() -> Self {
-        Default::default()
-    }
-
     pub fn new(origin: Vec3, direction: Vec3) -> Self {
         Ray { origin, direction }
     }

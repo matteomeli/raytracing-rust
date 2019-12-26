@@ -1,28 +1,14 @@
-use raytracer::{dot, Ray, Vec3};
+use raytracer::{HitResult, Hittable, Ray, Sphere, Vec3};
 
+use std::f32;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-fn hit_sphere(center: Vec3, radius: f32, ray: &Ray) -> f32 {
-    let oc = ray.origin - center;
-    let a = dot(&ray.direction, &ray.direction);
-    let b = 2.0 * dot(&ray.direction, &oc);
-    let c = dot(&oc, &oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (-b - discriminant.sqrt()) / 2.0 * a
-    }
-}
-
-fn color(ray: &Ray) -> Vec3 {
-    let sphere_center = Vec3::new(0.0, 0.0, -1.0);
-    let t = hit_sphere(sphere_center, 0.5, &ray);
-    if t > 0.0 {
-        let normal = Vec3::unit_from(ray.evaluate(t) - sphere_center);
-        Vec3::from(0.5) + normal * 0.5
+fn color(ray: &Ray, hittable: &impl Hittable) -> Vec3 {
+    let mut hit_result = HitResult::default();
+    if hittable.hit(ray, 0.0, f32::MAX, &mut hit_result) {
+        Vec3::from(0.5) + hit_result.normal * 0.5
     } else {
         let unit_direction = Vec3::unit_from(ray.direction);
         let t = 0.5 * (unit_direction.y) + 1.0;
@@ -43,14 +29,17 @@ fn main() -> Result<(), std::io::Error> {
     let lower_left_corner = Vec3::new(-2.0, -1.0, -1.0);
     let horizontal = Vec3::new(4.0, 0.0, 0.0);
     let vertical = Vec3::new(0.0, 2.0, 0.0);
-    let origin = Vec3::zero();
+    let origin = Vec3::default();
+
+    let sphere = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
+
     for y in (0..ny).rev() {
         for x in 0..nx {
             let u = x as f32 / nx as f32;
             let v = y as f32 / ny as f32;
 
             let ray = Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
-            let col = color(&ray);
+            let col = color(&ray, &sphere);
 
             let ir = (255.9 * col[0]) as i32;
             let ig = (255.9 * col[1]) as i32;
