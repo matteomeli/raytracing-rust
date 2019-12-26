@@ -18,21 +18,22 @@ impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, result: &mut HitResult) -> bool {
         let oc = ray.origin - self.center;
         let a = dot(&ray.direction, &ray.direction);
-        let b = dot(&ray.direction, &oc);
+        let half_b = dot(&ray.direction, &oc);
         let c = dot(&oc, &oc) - self.radius * self.radius;
-        let discriminant = b * b - a * c;
+        let discriminant = half_b * half_b - a * c;
         if discriminant > 0.0 {
-            let mut t = (-b - discriminant.sqrt()) / a;
+            let root = discriminant.sqrt();
+            let mut t = (-half_b - root) / a;
             if t > t_min && t < t_max {
                 result.t = t;
-                result.point = ray.evaluate(result.t);
+                result.point = ray.at(result.t);
                 result.normal = (result.point - self.center) / self.radius;
                 true
             } else {
-                t = (-b + discriminant.sqrt()) / a;
+                t = (-half_b + root) / a;
                 if t > t_min && t < t_max {
                     result.t = t;
-                    result.point = ray.evaluate(result.t);
+                    result.point = ray.at(result.t);
                     result.normal = (result.point - self.center) / self.radius;
                     true
                 } else {
