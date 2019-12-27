@@ -10,6 +10,15 @@ pub struct World {
 }
 
 impl World {
+    pub fn new(hittables: Vec<Box<dyn Hittable>>) -> Self {
+        World { hittables }
+    }
+
+    pub fn new_random() -> Self {
+        // TODO: Generate random world.
+        unimplemented!()
+    }
+
     pub fn add(&mut self, hittable: Box<dyn Hittable>) {
         self.hittables.push(hittable);
     }
