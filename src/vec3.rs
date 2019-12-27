@@ -119,6 +119,7 @@ impl DivAssign for Vec3 {
 }
 
 impl DivAssign<f32> for Vec3 {
+    #[allow(clippy::suspicious_op_assign_impl)]
     fn div_assign(&mut self, rhs: f32) {
         debug_assert!(rhs != 0.0, "Division by 0.");
         let k = 1.0 / rhs;

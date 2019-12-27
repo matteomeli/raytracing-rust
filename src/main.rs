@@ -17,7 +17,7 @@ fn main() -> Result<(), std::io::Error> {
     let ns = 100;
 
     // Write PPM header
-    file.write(format!("P3\n{} {}\n255\n", nx, ny).as_bytes())?;
+    file.write_all(format!("P3\n{} {}\n255\n", nx, ny).as_bytes())?;
 
     let mut world = World::default();
     world.add(Box::new(Sphere::new(
@@ -64,7 +64,7 @@ fn main() -> Result<(), std::io::Error> {
             let ib = (255.9 * col[2]) as i32;
 
             // Write pixel color
-            file.write(format!("{} {} {}\n", ir, ig, ib).as_bytes())?;
+            file.write_all(format!("{} {} {}\n", ir, ig, ib).as_bytes())?;
         }
     }
 
