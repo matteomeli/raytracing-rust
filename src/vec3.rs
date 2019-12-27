@@ -29,9 +29,11 @@ impl Vec3 {
 
     pub fn random_in_unit_sphere() -> Self {
         let mut rng = thread_rng();
-        let mut candidate = Vec3::from(rng.gen::<f32>());
+        let mut candidate = 2.0 * Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
+            - Vec3::new(1.0, 1.0, 1.0);
         while candidate.squared_length() >= 1.0 {
-            candidate = Vec3::from(rng.gen::<f32>());
+            candidate = 2.0 * Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
+                - Vec3::new(1.0, 1.0, 1.0);
         }
         candidate
     }
