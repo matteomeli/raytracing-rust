@@ -1,10 +1,12 @@
-use raytracer::{Camera, Sphere, Vec3, World};
+use raytracer::{Camera, Lambertian, Metal, Sphere, Vec3, World};
 
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
 use rand::prelude::*;
+
+use std::rc::Rc;
 
 fn main() -> Result<(), std::io::Error> {
     let path = Path::new("out/scene.ppm");
@@ -18,8 +20,26 @@ fn main() -> Result<(), std::io::Error> {
     file.write(format!("P3\n{} {}\n255\n", nx, ny).as_bytes())?;
 
     let mut world = World::default();
-    world.add(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5));
-    world.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, 0.0, -1.0),
+        0.5,
+        Rc::new(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))),
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, -100.5, -1.0),
+        100.0,
+        Rc::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0))),
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(1.0, 0.0, -1.0),
+        0.5,
+        Rc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2))),
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        0.5,
+        Rc::new(Metal::new(Vec3::new(0.8, 0.8, 0.8))),
+    )));
 
     let camera = Camera::default();
 
@@ -32,7 +52,7 @@ fn main() -> Result<(), std::io::Error> {
                 let u = (x as f32 + rng.gen::<f32>()) / nx as f32;
                 let v = (y as f32 + rng.gen::<f32>()) / ny as f32;
                 let ray = camera.ray_at(u, v);
-                col += world.color(&ray);
+                col += world.color(&ray, 0);
             }
             col /= ns as f32;
 

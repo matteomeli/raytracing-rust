@@ -4,29 +4,31 @@ use crate::vec3::Vec3;
 
 use std::f32;
 
-#[derive(Debug, Default)]
-pub struct World<T>
-where
-    T: Hittable,
-{
-    hittables: Vec<T>,
+#[derive(Default)]
+pub struct World {
+    hittables: Vec<Box<dyn Hittable>>,
 }
 
-impl<T> World<T>
-where
-    T: Hittable,
-{
-    pub fn add(&mut self, hittable: T) {
+impl World {
+    pub fn add(&mut self, hittable: Box<dyn Hittable>) {
         self.hittables.push(hittable);
     }
 
-    pub fn color(&self, ray: &Ray) -> Vec3 {
-        let mut hit = HitResult::default();
+    pub fn color(&self, ray: &Ray, depth: i32) -> Vec3 {
         // Ignore hits very close to 0.
-        if self.hit(ray, 0.001, f32::MAX, &mut hit) {
-            let target = hit.point + hit.normal + Vec3::random_in_unit_sphere();
-            let bounced = Ray::new(hit.point, target - hit.point);
-            0.5 * self.color(&bounced)
+        if let Some(hit) = self.hit(ray, 0.001, f32::MAX) {
+            let mut attenuation = Vec3::default();
+            let mut scattered = Ray::default();
+            // Limit to 50 rebounces.
+            if depth < 50
+                && hit
+                    .material
+                    .scatter(ray, &hit, &mut attenuation, &mut scattered)
+            {
+                attenuation * self.color(&scattered, depth + 1)
+            } else {
+                Vec3::default()
+            }
         } else {
             let unit_direction = Vec3::unit_from(ray.direction);
             let t = 0.5 * (unit_direction.y) + 1.0;
@@ -35,21 +37,17 @@ where
     }
 }
 
-impl<T> Hittable for World<T>
-where
-    T: Hittable,
-{
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, result: &mut HitResult) -> bool {
-        let mut hit_result = HitResult::default();
-        let mut has_hit_anything = false;
+impl Hittable for World {
+    // Computes closest hit
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitResult> {
+        let mut result = None;
         let mut closest_hit_distance = t_max;
         for hittable in self.hittables.iter() {
-            if hittable.hit(ray, t_min, closest_hit_distance, &mut hit_result) {
-                has_hit_anything = true;
-                closest_hit_distance = hit_result.t;
-                *result = hit_result;
+            if let Some(hit) = hittable.hit(ray, t_min, closest_hit_distance) {
+                closest_hit_distance = hit.t;
+                result.replace(hit);
             }
         }
-        has_hit_anything
+        result
     }
 }

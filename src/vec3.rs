@@ -224,3 +224,7 @@ pub fn cross(v1: &Vec3, v2: &Vec3) -> Vec3 {
         v1.x * v2.y - v1.y * v2.x,
     )
 }
+
+pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    v - 2.0 * dot(&v, &n) * n
+}
