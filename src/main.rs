@@ -41,7 +41,14 @@ fn main() -> Result<(), std::io::Error> {
         Rc::new(Dielectric::new(1.5)),
     )));
 
-    let camera = Camera::default();
+    let camera = Camera::new(
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        45.0,
+        nx as f32 / ny as f32,
+    );
+    //println!("{:?}", camera);
 
     let mut rng = thread_rng();
 
