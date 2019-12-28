@@ -8,7 +8,7 @@ mod world;
 
 pub use camera::Camera;
 pub use hittable::{HitResult, Hittable};
-pub use material::{Dielectric, Lambertian, Material, Metal};
+pub use material::{Dielectric, Lambertian, Material, Metallic};
 pub use ray::Ray;
 pub use sphere::Sphere;
 pub use vec3::{cross, dot, Vec3};

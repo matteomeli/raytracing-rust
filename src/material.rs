@@ -39,21 +39,21 @@ impl Material for Lambertian {
     }
 }
 
-pub struct Metal {
+pub struct Metallic {
     albedo: Vec3,
     fuzz: f32,
 }
 
-impl Metal {
+impl Metallic {
     pub fn new(albedo: Vec3, fuzz: f32) -> Self {
-        Metal {
+        Metallic {
             albedo,
             fuzz: if fuzz <= 1.0 { fuzz } else { 1.0 },
         }
     }
 }
 
-impl Material for Metal {
+impl Material for Metallic {
     fn scatter(
         &self,
         ray: &Ray,
@@ -129,5 +129,5 @@ impl Material for Dielectric {
 fn schlick(cosine: f32, refraction_index: f32) -> f32 {
     let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
     r0 = r0 * r0;
-    return r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0);
+    r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
 }

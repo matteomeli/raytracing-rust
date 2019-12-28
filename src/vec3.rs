@@ -39,6 +39,16 @@ impl Vec3 {
         Vec3::new(random::<f32>(), random::<f32>(), random::<f32>())
     }
 
+    pub fn random_in_unit_disk() -> Self {
+        let mut candidate =
+            2.0 * Vec3::new(random::<f32>(), random::<f32>(), 0.0) - Vec3::new(1.0, 1.0, 0.0);
+        while dot(&candidate, &candidate) >= 1.0 {
+            candidate =
+                2.0 * Vec3::new(random::<f32>(), random::<f32>(), 0.0) - Vec3::new(1.0, 1.0, 0.0);
+        }
+        candidate
+    }
+
     // As color
     pub fn r(&self) -> f32 {
         self.x
