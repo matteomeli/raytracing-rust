@@ -118,15 +118,11 @@ impl Material for Dielectric {
 
         if random::<f32>() < reflection_probe {
             *scattered = Ray::new(hit.point, reflected);
-            true
-        } else {
-            if let Some(r) = refracted {
-                *scattered = Ray::new(hit.point, r);
-                true
-            } else {
-                false
-            }
+        } else if let Some(r) = refracted {
+            *scattered = Ray::new(hit.point, r);
         }
+
+        true
     }
 }
 
