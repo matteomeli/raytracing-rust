@@ -73,6 +73,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         })
     };
 
+    // On the main thread, show raytracing progress within a glium window.
     use glium::{glutin, Surface};
 
     let mut events_loop = glutin::EventsLoop::new();
@@ -86,9 +87,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     struct Vertex {
         position: [f32; 2],
     }
-
     glium::implement_vertex!(Vertex, position);
-
     let vertex_buffer = glium::VertexBuffer::new(
         &display,
         &[
@@ -118,7 +117,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             gl_Position = vec4(position, 0.0, 1.0);
         }
     "#;
-
     let fragment_shader_src = r#"
         #version 140
         in vec2 v_tex_coords;
@@ -128,7 +126,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             color = texture(tex, v_tex_coords);
         }
     "#;
-
     let program =
         glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)?;
 
@@ -166,12 +163,11 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         });
     }
 
-    {
-        let buffer = image_buffer.lock().unwrap();
-        image::save_buffer("out.png", &buffer, nx as u32, ny as u32, image::RGBA(8))?;
-    }
-
     handle.join().unwrap();
+
+    // When finished save image to disk.
+    let buffer = image_buffer.lock().unwrap();
+    image::save_buffer("out.png", &buffer, nx as u32, ny as u32, image::RGBA(8))?;
 
     Ok(())
 }
