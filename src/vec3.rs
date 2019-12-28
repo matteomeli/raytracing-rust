@@ -28,14 +28,15 @@ impl Vec3 {
     }
 
     pub fn random_in_unit_sphere() -> Self {
-        let mut rng = thread_rng();
-        let mut candidate = 2.0 * Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
-            - Vec3::new(1.0, 1.0, 1.0);
+        let mut candidate = 2.0 * Vec3::random() - Vec3::new(1.0, 1.0, 1.0);
         while candidate.squared_length() >= 1.0 {
-            candidate = 2.0 * Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
-                - Vec3::new(1.0, 1.0, 1.0);
+            candidate = 2.0 * Vec3::random() - Vec3::new(1.0, 1.0, 1.0);
         }
         candidate
+    }
+
+    pub fn random() -> Self {
+        Vec3::new(random::<f32>(), random::<f32>(), random::<f32>())
     }
 
     // As color
@@ -230,4 +231,18 @@ pub fn cross(v1: &Vec3, v2: &Vec3) -> Vec3 {
 
 pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     v - 2.0 * dot(&v, &n) * n
+}
+
+// Snell's law in vector form (https://physics.stackexchange.com/questions/435512/snells-law-in-vector-form)
+pub fn refract(incident: Vec3, normal: Vec3, ni: f32, nt: f32) -> Option<Vec3> {
+    let i = Vec3::unit_from(incident);
+    let dot_ni = dot(&i, &normal);
+    let ni_over_nt = ni / nt;
+    let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dot_ni * dot_ni);
+    if discriminant > 0.0 {
+        let refracted = ni_over_nt * (i - normal * dot_ni) - normal * discriminant.sqrt();
+        Some(refracted)
+    } else {
+        None
+    }
 }

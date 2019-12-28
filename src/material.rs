@@ -2,6 +2,8 @@ use crate::hittable::HitResult;
 use crate::ray::Ray;
 use crate::vec3::{self, Vec3};
 
+use rand::prelude::*;
+
 pub trait Material {
     fn scatter(
         &self,
@@ -67,4 +69,69 @@ impl Material for Metal {
         *attenuation = self.albedo;
         vec3::dot(&scattered.direction, &hit.normal) > 0.0
     }
+}
+
+pub struct Dielectric {
+    refraction_index: f32,
+}
+
+impl Dielectric {
+    pub fn new(refraction_index: f32) -> Self {
+        Dielectric { refraction_index }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        hit: &HitResult,
+        attenuation: &mut Vec3,
+        scattered: &mut Ray,
+    ) -> bool {
+        let reflected = vec3::reflect(ray.direction, hit.normal);
+        *attenuation = Vec3::from(1.0); // Glassy surfaces absorb nothing.
+
+        let (outward_normal, ni, nt, cosine) = if vec3::dot(&ray.direction, &hit.normal) > 0.0 {
+            (
+                -hit.normal,
+                self.refraction_index,
+                1.0,
+                self.refraction_index * vec3::dot(&ray.direction, &hit.normal)
+                    / ray.direction.length(),
+            )
+        } else {
+            (
+                hit.normal,
+                1.0,
+                self.refraction_index,
+                -vec3::dot(&ray.direction, &hit.normal) / ray.direction.length(),
+            )
+        };
+
+        let (reflection_probe, refracted) =
+            if let Some(refracted) = vec3::refract(ray.direction, outward_normal, ni, nt) {
+                (schlick(cosine, self.refraction_index), Some(refracted))
+            } else {
+                (1.0, None)
+            };
+
+        if random::<f32>() < reflection_probe {
+            *scattered = Ray::new(hit.point, reflected);
+            true
+        } else {
+            if let Some(r) = refracted {
+                *scattered = Ray::new(hit.point, r);
+                true
+            } else {
+                false
+            }
+        }
+    }
+}
+
+fn schlick(cosine: f32, refraction_index: f32) -> f32 {
+    let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
+    r0 = r0 * r0;
+    return r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0);
 }

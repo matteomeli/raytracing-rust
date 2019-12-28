@@ -1,4 +1,4 @@
-use raytracer::{Camera, Lambertian, Metal, Sphere, Vec3, World};
+use raytracer::{Camera, Dielectric, Lambertian, Metal, Sphere, Vec3, World};
 
 use std::fs::File;
 use std::io::Write;
@@ -38,7 +38,7 @@ fn main() -> Result<(), std::io::Error> {
     world.add(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         0.5,
-        Rc::new(Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.3)),
+        Rc::new(Dielectric::new(1.5)),
     )));
 
     let camera = Camera::default();
