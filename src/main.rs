@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                 distance_to_focus,
             );
 
-            for y in 0..ny {
+            for y in (0..ny).rev() {
                 for x in 0..nx {
                     let mut col = Vec3::default();
                     for _ in 0..ns {
