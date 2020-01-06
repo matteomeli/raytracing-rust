@@ -1,8 +1,12 @@
 use raytracer::{Camera, Vec3, World};
 
 use std::error;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    mpsc, Arc, Mutex,
+};
 use std::thread;
+use std::time::Instant;
 
 use rand::prelude::*;
 
@@ -151,32 +155,46 @@ struct Raytracer {
     num_samples: u32,
     pub shared: Arc<Mutex<RaytracerData>>,
     pool: ThreadPool,
+    has_started: bool,
+    num_started: usize,
+    mum_completed: Arc<AtomicUsize>,
 }
 
 impl Raytracer {
     pub fn new(width: u32, height: u32, num_samples: u32) -> Self {
         let num_pixels = (width * height) as usize;
+
+        let shared = Arc::new(Mutex::new(RaytracerData {
+            width,
+            height,
+            samples: vec![0.0; num_pixels * 5], // RGBA + samples count
+            pixels: vec![0u8; num_pixels * 4],  // RGBA
+        }));
+
+        let pool = ThreadPool::new(num_cpus::get());
+
+        let has_started = false;
+        let num_started = 0;
+        let mum_completed = Arc::new(AtomicUsize::new(0));
+
         Raytracer {
             width,
             height,
             num_samples,
-            shared: Arc::new(Mutex::new(RaytracerData {
-                width,
-                height,
-                samples: vec![0.0; num_pixels * 5], // RGBA + samples count
-                pixels: vec![0u8; num_pixels * 4],  // RGBA
-            })),
-            pool: ThreadPool::new(1),
+            shared,
+            pool,
+            has_started,
+            num_started,
+            mum_completed,
         }
     }
 
-    pub fn start(&mut self) {
-        let shared = self.shared.clone();
+    pub fn render(&mut self) {
         let width = self.width;
         let height = self.height;
         let num_samples = self.num_samples;
 
-        let world = World::random();
+        let world = Arc::new(World::random());
 
         let look_from = Vec3::new(13.0, 2.0, 3.0);
         let look_at = Vec3::new(0.0, 0.0, 0.0);
@@ -184,7 +202,7 @@ impl Raytracer {
         let aspect_ratio = width as f32 / height as f32;
         let aperture = 0.1;
         let distance_to_focus = 10.0;
-        let camera = Camera::new(
+        let camera = Arc::new(Camera::new(
             look_from,
             look_at,
             Vec3::new(0.0, 1.0, 0.0),
@@ -192,22 +210,47 @@ impl Raytracer {
             aspect_ratio,
             aperture,
             distance_to_focus,
-        );
+        ));
 
-        self.pool.execute(move || {
-            for y in (0..height).rev() {
-                for x in 0..width {
-                    for _ in 0..num_samples {
-                        let u = (x as f32 + random::<f32>()) / width as f32;
-                        let v = (y as f32 + random::<f32>()) / height as f32;
-                        let ray = camera.ray_at(u, v);
-                        let col = world.color(&ray, 0);
+        let chunks = num_cpus::get() as u32;
 
-                        shared.lock().unwrap().add_sample(x, y, col);
+        // divide horizontally for now, in num_cpu's equal chunks
+        let chunk_size = width / chunks;
+        for chunk in 0..chunks {
+            let shared = self.shared.clone();
+            let world = world.clone();
+            let camera = camera.clone();
+
+            let start_x = chunk * chunk_size;
+            let end_x = start_x + chunk_size;
+
+            let num_completed = self.mum_completed.clone();
+
+            self.pool.execute(move || {
+                for y in (0..height).rev() {
+                    for x in start_x..end_x {
+                        for _ in 0..num_samples {
+                            let u = (x as f32 + random::<f32>()) / width as f32;
+                            let v = (y as f32 + random::<f32>()) / height as f32;
+                            let ray = camera.ray_at(u, v);
+                            let col = world.color(&ray, 0);
+
+                            shared.lock().unwrap().add_sample(x, y, col);
+                        }
                     }
                 }
-            }
-        });
+
+                num_completed.fetch_add(1, Ordering::SeqCst);
+            });
+
+            self.num_started += 1;
+        }
+
+        self.has_started = true;
+    }
+
+    pub fn is_done(&self) -> bool {
+        self.has_started && self.mum_completed.fetch_add(0, Ordering::SeqCst) == self.num_started
     }
 }
 
@@ -215,9 +258,11 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let width = 400;
     let height = 200;
     let num_samples = 100;
-
     let mut raytracer = Raytracer::new(width, height, num_samples);
-    raytracer.start();
+    let mut has_finished_rendering = false;
+
+    let start_time = Instant::now();
+    raytracer.render();
 
     // On the main thread, show raytracing progress within a glium window.
     use glium::index::PrimitiveType;
@@ -316,6 +361,15 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             &Default::default(),
         )?;
         target.finish()?;
+
+        if !has_finished_rendering && raytracer.is_done() {
+            let end_time = Instant::now();
+            println!(
+                "Rendering finished in {}s.",
+                end_time.duration_since(start_time).as_secs_f64()
+            );
+            has_finished_rendering = true;
+        }
 
         events_loop.poll_events(|ev| match ev {
             glutin::Event::WindowEvent { event, .. } => match event {

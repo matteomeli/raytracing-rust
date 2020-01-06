@@ -10,17 +10,17 @@ use std::f32;
 
 #[derive(Default)]
 pub struct World {
-    hittables: Vec<Box<dyn Hittable + Send>>,
+    hittables: Vec<Box<dyn Hittable + Send + Sync>>,
 }
 
 impl World {
-    pub fn new(hittables: Vec<Box<dyn Hittable + Send>>) -> Self {
+    pub fn new(hittables: Vec<Box<dyn Hittable + Send + Sync>>) -> Self {
         World { hittables }
     }
 
     pub fn random() -> Self {
         let n = 500;
-        let mut hittables: Vec<Box<dyn Hittable + Send>> = Vec::with_capacity(n);
+        let mut hittables: Vec<Box<dyn Hittable + Send + Sync>> = Vec::with_capacity(n);
 
         hittables.push(Box::new(Sphere::new(
             Vec3::new(0.0, -1000.0, 0.0),
@@ -86,7 +86,7 @@ impl World {
         World::new(hittables)
     }
 
-    pub fn add(&mut self, hittable: Box<dyn Hittable + Send>) {
+    pub fn add(&mut self, hittable: Box<dyn Hittable + Send + Sync>) {
         self.hittables.push(hittable);
     }
 
