@@ -153,6 +153,7 @@ struct Raytracer {
     width: u32,
     height: u32,
     num_samples: u32,
+    num_threads: usize,
     pub shared: Arc<Mutex<RaytracerData>>,
     pool: ThreadPool,
     has_started: bool,
@@ -161,7 +162,7 @@ struct Raytracer {
 }
 
 impl Raytracer {
-    pub fn new(width: u32, height: u32, num_samples: u32) -> Self {
+    pub fn new(width: u32, height: u32, num_samples: u32, num_threads: usize) -> Self {
         let num_pixels = (width * height) as usize;
 
         let shared = Arc::new(Mutex::new(RaytracerData {
@@ -171,7 +172,7 @@ impl Raytracer {
             pixels: vec![0u8; num_pixels * 4],  // RGBA
         }));
 
-        let pool = ThreadPool::new(num_cpus::get());
+        let pool = ThreadPool::new(num_threads);
 
         let has_started = false;
         let num_started = 0;
@@ -181,6 +182,7 @@ impl Raytracer {
             width,
             height,
             num_samples,
+            num_threads,
             shared,
             pool,
             has_started,
@@ -212,9 +214,8 @@ impl Raytracer {
             distance_to_focus,
         ));
 
-        let chunks = num_cpus::get() as u32;
-
-        // divide horizontally for now, in num_cpu's equal chunks
+        // Simply divide horizontally for now, in num_cpu's equal chunks
+        let chunks = self.num_threads as u32;
         let chunk_size = width / chunks;
         for chunk in 0..chunks {
             let shared = self.shared.clone();
@@ -258,7 +259,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let width = 400;
     let height = 200;
     let num_samples = 100;
-    let mut raytracer = Raytracer::new(width, height, num_samples);
+    let mut raytracer = Raytracer::new(width, height, num_samples, num_cpus::get());
     let mut has_finished_rendering = false;
 
     let start_time = Instant::now();
