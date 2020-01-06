@@ -1,12 +1,111 @@
 use raytracer::{Camera, Vec3, World};
 
 use std::error;
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 
 use rand::prelude::*;
 
 use image;
+
+trait FnBox {
+    fn call_box(self: Box<Self>);
+}
+
+impl<F: FnOnce()> FnBox for F {
+    fn call_box(self: Box<F>) {
+        (*self)()
+    }
+}
+
+type Job = Box<dyn FnBox + Send + 'static>;
+
+struct Worker {
+    id: usize,
+    thread: Option<thread::JoinHandle<()>>,
+}
+
+impl Worker {
+    pub fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Worker {
+        let thread = thread::spawn(move || loop {
+            let message = receiver.lock().unwrap().recv().unwrap();
+            match message {
+                Message::NewJob(job) => {
+                    println!("Worker {} got a job; executing.", id);
+
+                    job.call_box();
+                }
+                Message::Terminate => {
+                    println!("Worker {} was told to terminate.", id);
+
+                    break;
+                }
+            }
+        });
+
+        Worker {
+            id,
+            thread: Some(thread),
+        }
+    }
+}
+
+enum Message {
+    NewJob(Job),
+    Terminate,
+}
+
+struct ThreadPool {
+    workers: Vec<Worker>,
+    sender: mpsc::Sender<Message>,
+}
+
+impl ThreadPool {
+    pub fn new(size: usize) -> ThreadPool {
+        assert!(size > 0);
+
+        let mut workers = Vec::with_capacity(size);
+
+        let (sender, receiver) = mpsc::channel();
+
+        let receiver = Arc::new(Mutex::new(receiver));
+
+        for id in 0..size {
+            workers.push(Worker::new(id, Arc::clone(&receiver)));
+        }
+
+        ThreadPool { workers, sender }
+    }
+
+    pub fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        let job = Box::new(f);
+
+        self.sender.send(Message::NewJob(job)).unwrap();
+    }
+}
+
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        println!("Sending terminate message to all workers.");
+
+        for _ in &mut self.workers {
+            self.sender.send(Message::Terminate).unwrap();
+        }
+
+        println!("Shutting down all workers.");
+
+        for worker in &mut self.workers {
+            println!("Shutting down worker {}", worker.id);
+
+            if let Some(thread) = worker.thread.take() {
+                thread.join().unwrap();
+            }
+        }
+    }
+}
 
 struct RaytracerData {
     width: u32,
@@ -51,7 +150,7 @@ struct Raytracer {
     height: u32,
     num_samples: u32,
     pub shared: Arc<Mutex<RaytracerData>>,
-    thread: Option<thread::JoinHandle<()>>,
+    pool: ThreadPool,
 }
 
 impl Raytracer {
@@ -67,40 +166,40 @@ impl Raytracer {
                 samples: vec![0.0; num_pixels * 5], // RGBA + samples count
                 pixels: vec![0u8; num_pixels * 4],  // RGBA
             })),
-            thread: None,
+            pool: ThreadPool::new(1),
         }
     }
 
     pub fn start(&mut self) {
         let shared = self.shared.clone();
-        let ns = self.num_samples;
-        let nx = self.width;
-        let ny = self.height;
+        let width = self.width;
+        let height = self.height;
+        let num_samples = self.num_samples;
 
-        let handle = thread::spawn(move || {
-            let world = World::random();
+        let world = World::random();
 
-            let look_from = Vec3::new(13.0, 2.0, 3.0);
-            let look_at = Vec3::new(0.0, 0.0, 0.0);
-            let vertical_fov = 20.0;
-            let aspect_ratio = nx as f32 / ny as f32;
-            let aperture = 0.1;
-            let distance_to_focus = 10.0;
-            let camera = Camera::new(
-                look_from,
-                look_at,
-                Vec3::new(0.0, 1.0, 0.0),
-                vertical_fov,
-                aspect_ratio,
-                aperture,
-                distance_to_focus,
-            );
+        let look_from = Vec3::new(13.0, 2.0, 3.0);
+        let look_at = Vec3::new(0.0, 0.0, 0.0);
+        let vertical_fov = 20.0;
+        let aspect_ratio = width as f32 / height as f32;
+        let aperture = 0.1;
+        let distance_to_focus = 10.0;
+        let camera = Camera::new(
+            look_from,
+            look_at,
+            Vec3::new(0.0, 1.0, 0.0),
+            vertical_fov,
+            aspect_ratio,
+            aperture,
+            distance_to_focus,
+        );
 
-            for y in (0..ny).rev() {
-                for x in 0..nx {
-                    for _ in 0..ns {
-                        let u = (x as f32 + random::<f32>()) / nx as f32;
-                        let v = (y as f32 + random::<f32>()) / ny as f32;
+        self.pool.execute(move || {
+            for y in (0..height).rev() {
+                for x in 0..width {
+                    for _ in 0..num_samples {
+                        let u = (x as f32 + random::<f32>()) / width as f32;
+                        let v = (y as f32 + random::<f32>()) / height as f32;
                         let ray = camera.ray_at(u, v);
                         let col = world.color(&ray, 0);
 
@@ -109,16 +208,6 @@ impl Raytracer {
                 }
             }
         });
-
-        self.thread = Some(handle);
-    }
-}
-
-impl Drop for Raytracer {
-    fn drop(&mut self) {
-        if let Some(thread) = self.thread.take() {
-            thread.join().unwrap();
-        }
     }
 }
 

@@ -3,16 +3,20 @@ use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{dot, Vec3};
 
-use std::rc::Rc;
-
-pub struct Sphere {
+pub struct Sphere<T>
+where
+    T: Material,
+{
     center: Vec3,
     radius: f32,
-    material: Rc<dyn Material>,
+    material: T,
 }
 
-impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material: Rc<dyn Material>) -> Self {
+impl<T> Sphere<T>
+where
+    T: Material,
+{
+    pub fn new(center: Vec3, radius: f32, material: T) -> Self {
         Sphere {
             center,
             radius,
@@ -21,7 +25,10 @@ impl Sphere {
     }
 }
 
-impl Hittable for Sphere {
+impl<T> Hittable for Sphere<T>
+where
+    T: Material,
+{
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitResult> {
         let oc = ray.origin - self.center;
         let a = dot(&ray.direction, &ray.direction);
@@ -34,13 +41,13 @@ impl Hittable for Sphere {
             if t > t_min && t < t_max {
                 let point = ray.at(t);
                 let normal = (point - self.center) / self.radius;
-                Some(HitResult::new(t, point, normal, Rc::clone(&self.material)))
+                Some(HitResult::new(t, point, normal, &self.material))
             } else {
                 t = (-half_b + root) / a;
                 if t > t_min && t < t_max {
                     let point = ray.at(t);
                     let normal = (point - self.center) / self.radius;
-                    Some(HitResult::new(t, point, normal, Rc::clone(&self.material)))
+                    Some(HitResult::new(t, point, normal, &self.material))
                 } else {
                     None
                 }

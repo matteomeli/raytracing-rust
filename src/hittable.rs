@@ -2,17 +2,15 @@ use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-use std::rc::Rc;
-
-pub struct HitResult {
+pub struct HitResult<'a> {
     pub t: f32,
     pub point: Vec3,
     pub normal: Vec3,
-    pub material: Rc<dyn Material>,
+    pub material: &'a dyn Material,
 }
 
-impl HitResult {
-    pub fn new(t: f32, point: Vec3, normal: Vec3, material: Rc<dyn Material>) -> Self {
+impl<'a> HitResult<'a> {
+    pub fn new(t: f32, point: Vec3, normal: Vec3, material: &'a dyn Material) -> Self {
         HitResult {
             t,
             point,

@@ -7,26 +7,25 @@ use crate::vec3::Vec3;
 use rand::prelude::*;
 
 use std::f32;
-use std::rc::Rc;
 
 #[derive(Default)]
 pub struct World {
-    hittables: Vec<Box<dyn Hittable>>,
+    hittables: Vec<Box<dyn Hittable + Send>>,
 }
 
 impl World {
-    pub fn new(hittables: Vec<Box<dyn Hittable>>) -> Self {
+    pub fn new(hittables: Vec<Box<dyn Hittable + Send>>) -> Self {
         World { hittables }
     }
 
     pub fn random() -> Self {
         let n = 500;
-        let mut hittables: Vec<Box<dyn Hittable>> = Vec::with_capacity(n);
+        let mut hittables: Vec<Box<dyn Hittable + Send>> = Vec::with_capacity(n);
 
         hittables.push(Box::new(Sphere::new(
             Vec3::new(0.0, -1000.0, 0.0),
             1000.0,
-            Rc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5))),
+            Lambertian::new(Vec3::new(0.5, 0.5, 0.5)),
         )));
 
         for a in -11..11 {
@@ -42,31 +41,27 @@ impl World {
                         hittables.push(Box::new(Sphere::new(
                             center,
                             0.2,
-                            Rc::new(Lambertian::new(Vec3::new(
+                            Lambertian::new(Vec3::new(
                                 random::<f32>() * random::<f32>(),
                                 random::<f32>() * random::<f32>(),
                                 random::<f32>() * random::<f32>(),
-                            ))),
+                            )),
                         )))
                     } else if random_material_chooser < 0.95 {
                         hittables.push(Box::new(Sphere::new(
                             center,
                             0.2,
-                            Rc::new(Metallic::new(
+                            Metallic::new(
                                 Vec3::new(
                                     0.5 * (1.0 + random::<f32>()),
                                     0.5 * (1.0 + random::<f32>()),
                                     0.5 * (1.0 + random::<f32>()),
                                 ),
                                 0.5 * random::<f32>(),
-                            )),
+                            ),
                         )))
                     } else {
-                        hittables.push(Box::new(Sphere::new(
-                            center,
-                            0.2,
-                            Rc::new(Dielectric::new(1.5)),
-                        )));
+                        hittables.push(Box::new(Sphere::new(center, 0.2, Dielectric::new(1.5))));
                     }
                 }
             }
@@ -75,23 +70,23 @@ impl World {
         hittables.push(Box::new(Sphere::new(
             Vec3::new(0.0, 1.0, 0.0),
             1.0,
-            Rc::new(Dielectric::new(1.5)),
+            Dielectric::new(1.5),
         )));
         hittables.push(Box::new(Sphere::new(
             Vec3::new(-4.0, 1.0, 0.0),
             1.0,
-            Rc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1))),
+            Lambertian::new(Vec3::new(0.4, 0.2, 0.1)),
         )));
         hittables.push(Box::new(Sphere::new(
             Vec3::new(4.0, 1.0, 0.0),
             1.0,
-            Rc::new(Metallic::new(Vec3::new(0.7, 0.6, 0.5), 0.0)),
+            Metallic::new(Vec3::new(0.7, 0.6, 0.5), 0.0),
         )));
 
         World::new(hittables)
     }
 
-    pub fn add(&mut self, hittable: Box<dyn Hittable>) {
+    pub fn add(&mut self, hittable: Box<dyn Hittable + Send>) {
         self.hittables.push(hittable);
     }
 
