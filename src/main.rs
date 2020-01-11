@@ -153,7 +153,7 @@ struct Raytracer {
     width: u32,
     height: u32,
     num_samples: u32,
-    num_threads: usize,
+    _num_threads: usize,
     pub shared: Arc<Mutex<RaytracerData>>,
     pool: ThreadPool,
     has_started: bool,
@@ -182,7 +182,7 @@ impl Raytracer {
             width,
             height,
             num_samples,
-            num_threads,
+            _num_threads: num_threads,
             shared,
             pool,
             has_started,
@@ -191,7 +191,7 @@ impl Raytracer {
         }
     }
 
-    pub fn render(&mut self) {
+    pub fn start(&mut self) {
         let width = self.width;
         let height = self.height;
         let num_samples = self.num_samples;
@@ -214,30 +214,23 @@ impl Raytracer {
             distance_to_focus,
         ));
 
-        // Simply divide horizontally for now, in num_cpu's equal chunks
-        let chunks = self.num_threads as u32;
-        let chunk_size = width / chunks;
-        for chunk in 0..chunks {
+        // Each row to a worker
+        for y in (0..height).rev() {
             let shared = self.shared.clone();
             let world = world.clone();
             let camera = camera.clone();
 
-            let start_x = chunk * chunk_size;
-            let end_x = start_x + chunk_size;
-
             let num_completed = self.mum_completed.clone();
 
             self.pool.execute(move || {
-                for y in (0..height).rev() {
-                    for x in start_x..end_x {
-                        for _ in 0..num_samples {
-                            let u = (x as f32 + random::<f32>()) / width as f32;
-                            let v = (y as f32 + random::<f32>()) / height as f32;
-                            let ray = camera.ray_at(u, v);
-                            let col = world.color(&ray, 0);
+                for x in 0..width {
+                    for _ in 0..num_samples {
+                        let u = (x as f32 + random::<f32>()) / width as f32;
+                        let v = (y as f32 + random::<f32>()) / height as f32;
+                        let ray = camera.ray_at(u, v);
+                        let col = world.color(&ray, 0);
 
-                            shared.lock().unwrap().add_sample(x, y, col);
-                        }
+                        shared.lock().unwrap().add_sample(x, y, col);
                     }
                 }
 
@@ -250,7 +243,7 @@ impl Raytracer {
         self.has_started = true;
     }
 
-    pub fn is_done(&self) -> bool {
+    pub fn is_finished(&self) -> bool {
         self.has_started && self.mum_completed.fetch_add(0, Ordering::SeqCst) == self.num_started
     }
 }
@@ -258,12 +251,7 @@ impl Raytracer {
 fn main() -> Result<(), Box<dyn error::Error>> {
     let width = 400;
     let height = 200;
-    let num_samples = 100;
-    let mut raytracer = Raytracer::new(width, height, num_samples, num_cpus::get());
-    let mut has_finished_rendering = false;
-
-    let start_time = Instant::now();
-    raytracer.render();
+    let num_samples = 64;
 
     // On the main thread, show raytracing progress within a glium window.
     use glium::index::PrimitiveType;
@@ -333,7 +321,18 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     })?;
 
     let mut closed = false;
+    let mut is_first_frame_rendered = false;
+    let mut is_raytracing_started = false;
+    let mut is_raytracing_finished = false;
+    let mut start_time = Instant::now();
+    let mut raytracer = Raytracer::new(width, height, num_samples, num_cpus::get());
     while !closed {
+        if is_first_frame_rendered && !is_raytracing_started {
+            start_time = Instant::now();
+            raytracer.start();
+            is_raytracing_started = true;
+        }
+
         let image = {
             let mut shared = raytracer.shared.lock().unwrap();
             glium::texture::RawImage2d::from_raw_rgba_reversed(
@@ -363,13 +362,15 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         )?;
         target.finish()?;
 
-        if !has_finished_rendering && raytracer.is_done() {
+        is_first_frame_rendered = true;
+
+        if !is_raytracing_finished && raytracer.is_finished() {
             let end_time = Instant::now();
             println!(
                 "Rendering finished in {}s.",
                 end_time.duration_since(start_time).as_secs_f64()
             );
-            has_finished_rendering = true;
+            is_raytracing_finished = true;
         }
 
         events_loop.poll_events(|ev| match ev {
