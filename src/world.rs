@@ -1,7 +1,7 @@
 use crate::hittable::{HitResult, Hittable};
 use crate::material::{Dielectric, Lambertian, Metallic};
 use crate::ray::Ray;
-use crate::sphere::Sphere;
+use crate::sphere::{MovingSphere, Sphere};
 use crate::vec3::Vec3;
 
 use rand::prelude::*;
@@ -39,8 +39,9 @@ impl World {
                 );
                 if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                     if random_material_chooser < 0.8 {
-                        hittables.push(Box::new(Sphere::new(
-                            center,
+                        hittables.push(Box::new(MovingSphere::new(
+                            (center, center + Vec3::new(0.0, 0.5 * random::<f32>(), 0.0)),
+                            (0.0, 1.0),
                             0.2,
                             Rc::new(Lambertian::new(Vec3::new(
                                 random::<f32>() * random::<f32>(),

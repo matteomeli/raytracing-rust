@@ -1,9 +1,9 @@
+use rand::prelude::*;
+
 use std::fmt;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
-
-use rand::prelude::*;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Vec3 {

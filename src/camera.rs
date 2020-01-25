@@ -1,6 +1,7 @@
 use crate::ray::Ray;
 use crate::vec3::{self, Vec3};
 
+use rand::prelude::*;
 use std::f32;
 
 #[derive(Debug)]
@@ -12,6 +13,7 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     lens_radius: f32,
+    time_range: (f32, f32),
 }
 
 impl Camera {
@@ -23,6 +25,7 @@ impl Camera {
         aspect_ratio: f32,
         aperture: f32,
         focus_distance: f32,
+        time_range: (f32, f32),
     ) -> Self {
         let lens_radius = aperture / 2.0;
         let theta_radians = vertical_fov * f32::consts::PI / 180.0;
@@ -46,15 +49,19 @@ impl Camera {
             u,
             v,
             lens_radius,
+            time_range,
         }
     }
 
     pub fn ray_at(&self, s: f32, t: f32) -> Ray {
         let random_in_lens_disk = self.lens_radius * Vec3::random_in_unit_disk();
         let offset = self.u * random_in_lens_disk.x + self.v * random_in_lens_disk.y;
-        Ray::new(
+        let time: f32 =
+            self.time_range.0 + random::<f32>() * (self.time_range.1 - self.time_range.0);
+        Ray::with_time(
             self.origin + offset,
             self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
+            time,
         )
     }
 }
@@ -69,6 +76,7 @@ impl Default for Camera {
             u: Vec3::new(1.0, 0.0, 0.0),
             v: Vec3::new(0.0, 1.0, 0.0),
             lens_radius: 0.0,
+            time_range: (0.0, 0.0),
         }
     }
 }

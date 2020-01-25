@@ -7,12 +7,12 @@ use std::path::Path;
 use rand::prelude::*;
 
 fn main() -> Result<(), std::io::Error> {
-    let path = Path::new("out/scene.ppm");
+    let path = Path::new("out.ppm");
     let mut file = File::create(&path)?;
 
-    let nx = 1200;
-    let ny = 800;
-    let ns = 10;
+    let nx = 400;
+    let ny = 200;
+    let ns = 50;
 
     println!(
         "Generating {}x{} image with {} samples per pixel... ",
@@ -30,6 +30,7 @@ fn main() -> Result<(), std::io::Error> {
     let aspect_ratio = nx as f32 / ny as f32;
     let aperture = 0.1;
     let distance_to_focus = 10.0;
+    let time_range = (0.0, 1.0);
     let camera = Camera::new(
         look_from,
         look_at,
@@ -38,6 +39,7 @@ fn main() -> Result<(), std::io::Error> {
         aspect_ratio,
         aperture,
         distance_to_focus,
+        time_range,
     );
 
     for y in (0..ny).rev() {
