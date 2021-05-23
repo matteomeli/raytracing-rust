@@ -1,34 +1,18 @@
 use core::time::Duration;
 use std::{
+    f64,
     io::{self, Write},
     thread,
 };
 
-use raymond::{dot, Point3, Ray, Rgb, Vec3};
-
-fn hit_sphere(centre: Point3, radius: f64, ray: &Ray) -> f64 {
-    let oc = ray.origin - centre;
-    let a = ray.direction.length_squared();
-    let half_b = dot(&oc, &ray.direction);
-    let c = oc.length_squared() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        // Closes hit point is smallest t
-        (-half_b - discriminant.sqrt()) / a
-    }
-}
+use raymond::{Hittable, Point3, Ray, Rgb, Sphere, Vec3};
 
 fn ray_color(ray: &Ray) -> Rgb {
-    let sphere_centre = Point3::new(0.0, 0.0, -1.0);
-    let sphere_radius = 0.5;
-
     // Test sphere hit
-    let t = hit_sphere(sphere_centre, sphere_radius, ray);
-    if t > 0.0 {
+    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
+    if let Some(hit_result) = sphere.hit(ray, 0.0, f64::MAX) {
         // Use normal to shade the surface of the sphere
-        let n = (ray.at(t) - sphere_centre).to_unit();
+        let n = hit_result.normal;
         // Map normal components from (-1, 1) to (0, 1) to obtain a RGB color
         return 0.5 * Rgb::new(n.x + 1.0, n.y + 1.0, n.z + 1.0);
     }
