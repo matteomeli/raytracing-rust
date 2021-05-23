@@ -5,7 +5,13 @@ use std::{
     thread,
 };
 
-use raymond::{Hittable, Point3, Ray, Rgb, Sphere, Vec3};
+use raymond::{
+    color::{self, Rgb},
+    hittable::Hittable,
+    ray::Ray,
+    sphere::Sphere,
+    vec3::{Point3, Vec3, ZERO},
+};
 
 fn ray_color(ray: &Ray) -> Rgb {
     // Test sphere hit
@@ -19,7 +25,7 @@ fn ray_color(ray: &Ray) -> Rgb {
 
     let unit_direction = ray.direction.to_unit();
     let t = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - t) * Rgb::white() + t * Rgb::new(0.5, 0.7, 1.0)
+    (1.0 - t) * color::WHITE + t * Rgb::new(0.5, 0.7, 1.0)
 }
 
 fn main() {
@@ -32,7 +38,7 @@ fn main() {
     let viewport_height = 2.0;
     let viewport_width = aspect_ratio * viewport_height;
     let focal_length = 1.0;
-    let origin = Point3::zero();
+    let origin = ZERO;
     let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
     let vertical = Vec3::new(0.0, viewport_height, 0.0);
     let lower_left_corner =

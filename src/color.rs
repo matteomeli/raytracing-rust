@@ -3,6 +3,7 @@ use std::{
     ops::{Add, Mul},
 };
 /// A RGB color
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Rgb {
     pub r: f64,
     pub g: f64,
@@ -10,18 +11,13 @@ pub struct Rgb {
 }
 
 impl Rgb {
-    pub fn black() -> Self {
-        Rgb::new(0.0, 0.0, 0.0)
-    }
-
-    pub fn white() -> Self {
-        Rgb::new(1.0, 1.0, 1.0)
-    }
-
-    pub fn new(r: f64, g: f64, b: f64) -> Self {
+    pub const fn new(r: f64, g: f64, b: f64) -> Self {
         Rgb { r, g, b }
     }
 }
+
+pub static BLACK: Rgb = Rgb::new(0.0, 0.0, 0.0);
+pub static WHITE: Rgb = Rgb::new(1.0, 1.0, 1.0);
 
 impl Mul<Rgb> for f64 {
     type Output = Rgb;

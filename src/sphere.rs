@@ -1,4 +1,8 @@
-use crate::{dot, HitResult, Hittable, Point3, Ray};
+use crate::{
+    hittable::{HitResult, Hittable},
+    ray::Ray,
+    vec3::{dot, Point3},
+};
 
 pub struct Sphere {
     pub centre: Point3,

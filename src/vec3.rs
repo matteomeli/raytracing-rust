@@ -12,19 +12,11 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
-    pub fn zero() -> Self {
-        Default::default()
-    }
-
-    pub fn one() -> Self {
-        Vec3::from(1.0)
-    }
-
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
+    pub const fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x, y, z }
     }
 
-    pub fn from(e: f64) -> Self {
+    pub const fn from(e: f64) -> Self {
         Vec3::new(e, e, e)
     }
 
@@ -47,6 +39,9 @@ impl Vec3 {
         }
     }
 }
+
+pub static ZERO: Vec3 = Vec3::from(0.0);
+pub static ONE: Vec3 = Vec3::from(1.0);
 
 pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
     *u * *v
