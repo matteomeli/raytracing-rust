@@ -3,43 +3,43 @@ use std::{
     ops::{Add, Mul},
 };
 /// A RGB color
-pub struct Color {
+pub struct Rgb {
     pub r: f64,
     pub g: f64,
     pub b: f64,
 }
 
-impl Color {
+impl Rgb {
     pub fn black() -> Self {
-        Color::new(0.0, 0.0, 0.0)
+        Rgb::new(0.0, 0.0, 0.0)
     }
 
     pub fn white() -> Self {
-        Color::new(1.0, 1.0, 1.0)
+        Rgb::new(1.0, 1.0, 1.0)
     }
 
     pub fn new(r: f64, g: f64, b: f64) -> Self {
-        Color { r, g, b }
+        Rgb { r, g, b }
     }
 }
 
-impl Mul<Color> for f64 {
-    type Output = Color;
+impl Mul<Rgb> for f64 {
+    type Output = Rgb;
 
-    fn mul(self, rhs: Color) -> Self::Output {
-        Color::new(rhs.r * self, rhs.g * self, rhs.b * self)
+    fn mul(self, rhs: Rgb) -> Self::Output {
+        Rgb::new(rhs.r * self, rhs.g * self, rhs.b * self)
     }
 }
 
-impl Add for Color {
+impl Add for Rgb {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Color::new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
+        Rgb::new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
     }
 }
 
-impl fmt::Display for Color {
+impl fmt::Display for Rgb {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

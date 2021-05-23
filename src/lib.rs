@@ -1,4 +1,4 @@
-pub use color::Color;
+pub use color::Rgb;
 pub use ray::Ray;
 pub use vec3::{cross, dot, Point3, Vec3};
 
