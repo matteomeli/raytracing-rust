@@ -4,9 +4,23 @@ use std::{
     thread,
 };
 
-use raymond::{Color, Point3, Ray, Vec3};
+use raymond::{dot, Color, Point3, Ray, Vec3};
+
+fn hit_sphere(centre: Point3, radius: f64, ray: &Ray) -> bool {
+    let oc = ray.origin - centre;
+    let a = dot(&ray.direction, &ray.direction);
+    let b = 2.0 * dot(&oc, &ray.direction);
+    let c = dot(&oc, &oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant > 0.0
+}
 
 fn ray_color(ray: &Ray) -> Color {
+    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, ray) {
+        // Output red if intersecting with sphere placed at -1 on z axis and radius 0.5
+        return Color::new(1.0, 0.0, 0.0);
+    }
+
     let unit_direction = ray.direction.to_unit();
     let t = 0.5 * (unit_direction.y + 1.0);
     (1.0 - t) * Color::white() + t * Color::new(0.5, 0.7, 1.0)
