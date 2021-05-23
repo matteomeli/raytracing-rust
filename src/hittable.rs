@@ -8,11 +8,17 @@ pub struct HitResult {
     pub point: Point3,
     pub normal: Vec3,
     pub t: f64,
+    pub front_face: bool,
 }
 
 impl HitResult {
-    pub fn new(point: Point3, normal: Vec3, t: f64) -> Self {
-        HitResult { point, normal, t }
+    pub fn new(point: Point3, normal: Vec3, t: f64, front_face: bool) -> Self {
+        HitResult {
+            point,
+            normal,
+            t,
+            front_face,
+        }
     }
 }
 
