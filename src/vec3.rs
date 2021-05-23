@@ -6,9 +6,9 @@ use std::{
 /// A generic vector with 3 elements
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Vec3 {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl Vec3 {
@@ -20,32 +20,20 @@ impl Vec3 {
         Vec3::from(1.0)
     }
 
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x, y, z }
     }
 
-    pub fn from(e: f32) -> Self {
+    pub fn from(e: f64) -> Self {
         Vec3::new(e, e, e)
     }
 
-    pub fn length_squared(&self) -> f32 {
+    pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    pub fn length(&self) -> f32 {
+    pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
-    }
-
-    pub fn dot(&self, rhs: Self) -> Self {
-        *self * rhs
-    }
-
-    pub fn cross(&self, rhs: Self) -> Self {
-        Vec3 {
-            x: self.y * rhs.z - self.z * rhs.y,
-            y: self.z * rhs.x - self.x * rhs.z,
-            z: self.x * rhs.y - self.y * rhs.x,
-        }
     }
 
     pub fn to_unit(&self) -> Self {
@@ -60,8 +48,23 @@ impl Vec3 {
     }
 }
 
+pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
+    *u * *v
+}
+
+pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
+    Vec3 {
+        x: u.y * v.z - u.z * v.y,
+        y: u.z * v.x - u.x * v.z,
+        z: v.x * v.y - u.y * v.x,
+    }
+}
+
+/// An alias for a 3D point
+pub type Point3 = Vec3;
+
 impl Index<usize> for Vec3 {
-    type Output = f32;
+    type Output = f64;
 
     fn index(&self, index: usize) -> &Self::Output {
         debug_assert!(index < 3, "Index out of range.");
@@ -127,10 +130,10 @@ impl SubAssign for Vec3 {
 }
 
 impl Mul<Vec3> for Vec3 {
-    type Output = Self;
+    type Output = f64;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Vec3::new(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 }
 
@@ -142,33 +145,41 @@ impl MulAssign<Vec3> for Vec3 {
     }
 }
 
-impl Mul<f32> for Vec3 {
+impl Mul<f64> for Vec3 {
     type Output = Self;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         Vec3::new(self.x * rhs, self.y * rhs, self.z * rhs)
     }
 }
 
-impl MulAssign<f32> for Vec3 {
-    fn mul_assign(&mut self, rhs: f32) {
+impl Mul<Vec3> for f64 {
+    type Output = Vec3;
+
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        Vec3::new(self * rhs.x, self * rhs.y, self * rhs.z)
+    }
+}
+
+impl MulAssign<f64> for Vec3 {
+    fn mul_assign(&mut self, rhs: f64) {
         self.x *= rhs;
         self.y *= rhs;
         self.z *= rhs;
     }
 }
 
-impl Div<f32> for Vec3 {
+impl Div<f64> for Vec3 {
     type Output = Self;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: f64) -> Self::Output {
         debug_assert!(rhs != 0.0, "Division by 0.");
         Vec3::new(self.x / rhs, self.y / rhs, self.z / rhs)
     }
 }
 
-impl DivAssign<f32> for Vec3 {
-    fn div_assign(&mut self, rhs: f32) {
+impl DivAssign<f64> for Vec3 {
+    fn div_assign(&mut self, rhs: f64) {
         debug_assert!(rhs != 0.0, "Division by 0.");
         self.x /= rhs;
         self.y /= rhs;
