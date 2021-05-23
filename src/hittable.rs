@@ -22,6 +22,6 @@ impl HitResult {
     }
 }
 
-pub trait Hittable {
+pub trait Hittable: 'static {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitResult>;
 }

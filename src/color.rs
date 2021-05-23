@@ -2,6 +2,8 @@ use std::{
     fmt,
     ops::{Add, Mul},
 };
+
+use crate::vec3::Vec3;
 /// A RGB color
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Rgb {
@@ -32,6 +34,12 @@ impl Add for Rgb {
 
     fn add(self, rhs: Self) -> Self::Output {
         Rgb::new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
+    }
+}
+
+impl From<Vec3> for Rgb {
+    fn from(v: Vec3) -> Self {
+        Rgb::new(v.x, v.y, v.z)
     }
 }
 
