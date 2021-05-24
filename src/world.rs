@@ -23,7 +23,7 @@ impl World {
 
         if let Some(hit_result) = self.hit(&ray, 0.001, f64::MAX) {
             // For a simple diffuse material, randomize reflected ray in the unit sphere
-            let target = hit_result.point + hit_result.normal + Vec3::random_in_unit_sphere();
+            let target = hit_result.point + hit_result.normal + Vec3::random_unit_vector();
             let reflected_ray = Ray::new(hit_result.point, target - hit_result.point);
             return 0.5 * self.trace(reflected_ray, bounces_left - 1);
         }
