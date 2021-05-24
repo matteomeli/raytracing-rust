@@ -2,7 +2,6 @@ use crate::{
     color::{self, Rgb},
     hittable::{HitResult, Hittable},
     ray::Ray,
-    vec3::Vec3,
 };
 
 #[derive(Default)]
@@ -22,11 +21,12 @@ impl World {
         }
 
         if let Some(hit_result) = self.hit(&ray, 0.001, f64::MAX) {
-            // For a simple diffuse material, randomize reflected ray in the unit sphere
-            //let target = hit_result.point + hit_result.normal + Vec3::random_unit_vector();
-            let target = hit_result.point + Vec3::random_in_hemisphere(&hit_result.normal);
-            let reflected_ray = Ray::new(hit_result.point, target - hit_result.point);
-            return 0.5 * self.trace(reflected_ray, bounces_left - 1);
+            if let Some(scatter_result) = hit_result.material.scatter(&ray, &hit_result) {
+                return scatter_result.attenuation
+                    * self.trace(scatter_result.scattered_ray, bounces_left - 1);
+            }
+
+            return color::BLACK;
         }
 
         let unit_direction = ray.direction.to_unit();
@@ -37,22 +37,16 @@ impl World {
 
 impl Hittable for World {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitResult> {
-        let mut hit_result = HitResult::default();
-        let mut hit_anything = false;
+        let mut hit_result: Option<HitResult> = None;
         let mut closest_so_far = t_max;
 
         for hittable in self.hittables.iter() {
             if let Some(hit) = hittable.hit(ray, t_min, closest_so_far) {
-                hit_anything = true;
                 closest_so_far = hit.t;
-                hit_result = hit;
+                hit_result.replace(hit);
             }
         }
 
-        if hit_anything == false {
-            None
-        } else {
-            Some(hit_result)
-        }
+        hit_result
     }
 }

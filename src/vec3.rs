@@ -76,6 +76,11 @@ impl Vec3 {
             z: self.z * inv,
         }
     }
+
+    pub fn is_near_zero(&self) -> bool {
+        let epsilon = 1e-8;
+        self.x.abs() < epsilon && self.y.abs() < epsilon && self.z.abs() < epsilon
+    }
 }
 
 pub static ZERO: Vec3 = Vec3::from(0.0);
@@ -91,6 +96,10 @@ pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
         y: u.z * v.x - u.x * v.z,
         z: v.x * v.y - u.y * v.x,
     }
+}
+
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    *v - 2.0 * dot(v, n) * *n
 }
 
 /// An alias for a 3D point

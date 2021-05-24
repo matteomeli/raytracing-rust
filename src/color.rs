@@ -26,6 +26,14 @@ impl Mul<Rgb> for f64 {
     }
 }
 
+impl Mul<Rgb> for Rgb {
+    type Output = Rgb;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Rgb::new(self.r * rhs.r, self.g * rhs.g, self.b * rhs.b)
+    }
+}
+
 impl Add for Rgb {
     type Output = Self;
 
