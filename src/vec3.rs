@@ -3,6 +3,8 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
+use crate::rand_in_range;
+
 /// A generic vector with 3 elements
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Vec3 {
@@ -18,6 +20,29 @@ impl Vec3 {
 
     pub const fn from(e: f64) -> Self {
         Vec3::new(e, e, e)
+    }
+
+    pub fn random() -> Self {
+        Vec3::new(rand::random(), rand::random(), rand::random())
+    }
+
+    pub fn random_with_range(min: f64, max: f64) -> Self {
+        Vec3::new(
+            rand_in_range(min, max),
+            rand_in_range(min, max),
+            rand_in_range(min, max),
+        )
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        // Find by rejection
+        loop {
+            let candidate = Vec3::random_with_range(-1.0, 1.0);
+            if candidate.length_squared() >= 1.0 {
+                continue;
+            }
+            return candidate;
+        }
     }
 
     pub fn length_squared(&self) -> f64 {

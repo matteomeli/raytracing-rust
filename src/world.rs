@@ -1,7 +1,8 @@
 use crate::{
-    color::{self, Rgb, WHITE},
+    color::{self, Rgb},
     hittable::{HitResult, Hittable},
     ray::Ray,
+    vec3::Vec3,
 };
 
 #[derive(Default)]
@@ -14,11 +15,17 @@ impl World {
         self.hittables.push(Box::new(hittable))
     }
 
-    pub fn trace(&self, ray: &Ray) -> Rgb {
-        if let Some(hit_result) = self.hit(ray, 0.0, f64::MAX) {
-            // Use normal to shade the surface of the sphere
-            // Map normal components from (-1, 1) to (0, 1) to obtain a RGB color
-            return 0.5 * (Rgb::from(hit_result.normal) + WHITE);
+    pub fn trace(&self, ray: Ray, bounces_left: u32) -> Rgb {
+        // If we've exceeded the ray bounce limit, no more light is gathered.
+        if bounces_left == 0 {
+            return color::BLACK;
+        }
+
+        if let Some(hit_result) = self.hit(&ray, 0.001, f64::MAX) {
+            // For a simple diffuse material, randomize reflected ray in the unit sphere
+            let target = hit_result.point + hit_result.normal + Vec3::random_in_unit_sphere();
+            let reflected_ray = Ray::new(hit_result.point, target - hit_result.point);
+            return 0.5 * self.trace(reflected_ray, bounces_left - 1);
         }
 
         let unit_direction = ray.direction.to_unit();

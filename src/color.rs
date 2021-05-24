@@ -1,7 +1,4 @@
-use std::{
-    fmt,
-    ops::{Add, Mul},
-};
+use std::ops::{Add, AddAssign, Mul};
 
 use crate::vec3::Vec3;
 /// A RGB color
@@ -37,20 +34,35 @@ impl Add for Rgb {
     }
 }
 
+impl AddAssign for Rgb {
+    fn add_assign(&mut self, rhs: Self) {
+        self.r += rhs.r;
+        self.g += rhs.g;
+        self.b += rhs.b;
+    }
+}
+
 impl From<Vec3> for Rgb {
     fn from(v: Vec3) -> Self {
         Rgb::new(v.x, v.y, v.z)
     }
 }
 
-impl fmt::Display for Rgb {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {} {}",
-            (255.999 * self.r) as i32,
-            (255.999 * self.g) as i32,
-            (255.999 * self.b) as i32
-        )
-    }
+pub fn write_rgb(color: &Rgb, samples_per_pixel: i32) {
+    let mut r = color.r;
+    let mut g = color.g;
+    let mut b = color.b;
+
+    // Divide the color by the number of samples and gamma-correct for gamma=2.0 (equivalent to 1/2 exp or sqrt).
+    let scale = 1.0 / samples_per_pixel as f64;
+    r = (scale * r).sqrt();
+    g = (scale * g).sqrt();
+    b = (scale * b).sqrt();
+
+    println!(
+        "{} {} {}",
+        (256.0 * r.clamp(0.0, 0.999)) as i32,
+        (256.0 * g.clamp(0.0, 0.999)) as i32,
+        (256.0 * b.clamp(0.0, 0.999)) as i32
+    )
 }
